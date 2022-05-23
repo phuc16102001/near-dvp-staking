@@ -7,12 +7,16 @@ use crate::config::*;
 use crate::account::*;
 use crate::types::*;
 use crate::utils::*;
+use crate::enumeration::*;
+use crate::pool::*;
 
 mod config;
 mod account;
 mod types;
 mod utils;
 mod internal;
+mod enumeration;
+mod pool;
 
 // Using `near_bindgen` marco, to notify the smart contract
 // BorshSerde to serde as byte code (for storing on-chain)
@@ -32,6 +36,7 @@ pub struct StakingContract {
     pub last_block_balance_change: BlockHeight,     // Block height when balance updated
     pub accounts: LookupMap<AccountId, Account>,    // Account informations respected to ID  
     pub paused: bool,                               // Staking will be paused when there is no more tokens
+    pub paused_block: BlockHeight,                  // Block height when contract paused
 }
 
 #[near_bindgen]
@@ -63,10 +68,14 @@ impl StakingContract {
             pre_reward: 0, 
             last_block_balance_change: env::block_index(), 
             accounts: LookupMap::new(StorageKey::AccountKey),
-            paused: false
+            paused: false,
+            paused_block: 0
         }
     }
 
+    // Storing data on-chain require a small amount of NEAR (since using storage)
+    // Instead of using ourself money, we make the user to deposit them
+    // This is the `reserver_near` in wallet
     #[payable]
     pub fn storage_deposit(&mut self, account_id: Option<AccountId>) {
         assert_at_least_one_yocto();
