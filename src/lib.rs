@@ -6,10 +6,13 @@ use near_sdk::serde::{Deserialize, Serialize};
 use crate::config::*;
 use crate::account::*;
 use crate::types::*;
+use crate::utils::*;
 
 mod config;
 mod account;
 mod types;
+mod utils;
+mod internal;
 
 #[derive(BorshDeserialize, BorshSerialize, PanicOnDefault)]
 #[near_bindgen]
@@ -18,10 +21,10 @@ pub struct StakingContract {
     pub ft_contract_id: AccountId,                  // ID of fungible token contract
     pub config: Config,                             // Config incentive rule
     pub total_stake: Balance,                       // Total stake balance
-    pub total_paid_reward: Balance,
+    pub total_paid_reward: Balance,                 // 
     pub num_staker: u64,                            // The number of stakers
-    pub pre_reward: Balance,                        //
-    pub last_block_balance_change: BlockHeight,
+    pub pre_reward: Balance,                        // 
+    pub last_block_balance_change: BlockHeight,     // Block height when balance updated
     pub accounts: LookupMap<AccountId, Account>,    // Account informations respected to ID  
     pub paused: bool,                               // Staking will be paused when there is no more tokens
 }
@@ -55,6 +58,34 @@ impl StakingContract {
             accounts: LookupMap::new(StorageKey::AccountKey),
             paused: false
         }
+    }
+
+    #[payable]
+    pub fn storage_deposit(&mut self, account_id: Option<AccountId>) {
+        assert_at_least_one_yocto();
+        
+        let account = account_id.unwrap_or_else(|| env::predecessor_account_id());
+        let account_stake = self.accounts.get(&account);
+        if account_stake.is_some() {
+            // Refund all tokens
+            refund_deposit(0)
+        } else {
+            // Create new account
+            let storage_usage_before = env::storage_usage();
+            self.internal_create_account(account);
+            let storage_usage_after = env::storage_usage();
+
+            // Refund the rest tokens
+            refund_deposit(storage_usage_after - storage_usage_before);
+        }
+    }
+
+    pub fn exist_account(&self, account_id: AccountId) -> bool {
+        self.accounts.get(&account_id).is_some()
+    }
+
+    pub fn is_paused(&self) -> bool {
+        self.paused
     }
 }
 
