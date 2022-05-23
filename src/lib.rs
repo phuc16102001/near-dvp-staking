@@ -22,7 +22,6 @@ mod pool;
 // BorshSerde to serde as byte code (for storing on-chain)
 // Serde to serde as json (for query and display on front-end)
 // PanicOnDefault to prevent the smart contract init by itself
-
 #[derive(BorshDeserialize, BorshSerialize, PanicOnDefault)]
 #[near_bindgen]
 pub struct StakingContract {
@@ -44,6 +43,8 @@ impl StakingContract {
 
     // This macro define the function to init the contract
     // If using PanicOnDefault but without init macro, the smart contract won't be able to initialize
+    // Also, you can use --initFunction to determine which function to be called
+    // And --initArgs flag is to pass arguments as JSON
     #[init]
     pub fn new_default_config(
         owner_id: AccountId,
