@@ -14,6 +14,11 @@ mod types;
 mod utils;
 mod internal;
 
+// Using `near_bindgen` marco, to notify the smart contract
+// BorshSerde to serde as byte code (for storing on-chain)
+// Serde to serde as json (for query and display on front-end)
+// PanicOnDefault to prevent the smart contract init by itself
+
 #[derive(BorshDeserialize, BorshSerialize, PanicOnDefault)]
 #[near_bindgen]
 pub struct StakingContract {
@@ -32,6 +37,8 @@ pub struct StakingContract {
 #[near_bindgen]
 impl StakingContract {
 
+    // This macro define the function to init the contract
+    // If using PanicOnDefault but without init macro, the smart contract won't be able to initialize
     #[init]
     pub fn new_default_config(
         owner_id: AccountId,

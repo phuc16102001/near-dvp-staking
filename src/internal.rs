@@ -1,8 +1,10 @@
 use crate::*;
 
+// Using pub(crate) to only callable from inside the program instead of outside by command
+
 #[near_bindgen]
 impl StakingContract {
-    pub fn internal_create_account(&mut self, account_id: AccountId) {
+    pub(crate) fn internal_create_account(&mut self, account_id: AccountId) {
         let account = Account {
             stake_balance: 0,
             pre_reward: 0,
