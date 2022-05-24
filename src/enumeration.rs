@@ -3,7 +3,8 @@ use crate::*;
 #[near_bindgen]
 impl StakingContract {
     pub fn get_account_info(&self, account_id: &AccountId) -> AccountJson {
-        let account = self.accounts.get(account_id).unwrap();
+        let upgradable_account = self.accounts.get(account_id).unwrap();
+        let account = Account::from(upgradable_account);
         let new_reward = self.internal_calculate_new_reward(Some(&account));
         AccountJson::from(
             account_id.clone(),

@@ -12,8 +12,12 @@ impl StakingContract {
             unstake_balance: 0,
             unstake_start_time: 0,
             unstake_available_epoch: 0,
+            membership: Membership::Basic,
         };
-        self.accounts.insert(&account_id, &account);
+        self.accounts.insert(
+            &account_id, 
+            &UpgradableAccount::from(account)
+        );
     }
 
     // Calculate the reward for users from the previous changes

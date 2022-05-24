@@ -10,6 +10,8 @@ use crate::utils::*;
 use crate::enumeration::*;
 use crate::pool::*;
 use crate::staking_contract_v1::*;
+use crate::account_v1::*;
+use crate::upgradable_account::*;
 
 mod config;
 mod account;
@@ -19,6 +21,8 @@ mod internal;
 mod enumeration;
 mod pool;
 mod staking_contract_v1;
+mod account_v1;
+mod upgradable_account;
 
 // Using `near_bindgen` marco, to notify the smart contract
 // BorshSerde to serde as byte code (for storing on-chain)
@@ -35,7 +39,7 @@ pub struct StakingContract {
     pub num_staker: u64,                            
     pub pre_reward: Balance,                        
     pub last_block_balance_change: BlockHeight,     
-    pub accounts: LookupMap<AccountId, Account>,    
+    pub accounts: LookupMap<AccountId, UpgradableAccount>,    
     pub paused: bool,                               
     pub paused_block: BlockHeight,                  
     pub version: i16,                               // New field to update (V2)
@@ -116,6 +120,8 @@ impl StakingContract {
     // This is to upgrade the staking contract from v1 to v2
     // Use the private macro to avoid others people calling it (only the contract can call)
     // To migrate, use the command `near dev-deploy path --initFunction migrate --initArgs '{}'`
+    //
+    // This function MUST BE REMOVED after migrating to be secured
     #[private]
     #[init(ignore_state)]
     pub fn migrate() -> Self {

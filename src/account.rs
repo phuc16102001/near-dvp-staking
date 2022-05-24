@@ -1,13 +1,23 @@
 use crate::*;
 
 #[derive(BorshDeserialize, BorshSerialize)]
+#[derive(Deserialize, Serialize)]
+#[serde(crate="near_sdk::serde")]
+pub enum Membership {
+    Basic,
+    Standard,
+    Companion
+}
+
+#[derive(BorshDeserialize, BorshSerialize)]
 pub struct Account {
-    pub stake_balance: Balance,                 // Staked tokens
-    pub pre_reward: Balance,                    //
-    pub last_block_balance_change: BlockHeight, // Last block when balance changed
-    pub unstake_balance: Balance,               // Money that can unstake
-    pub unstake_start_time: Timestamp,          // Start time when user begin unstaking
-    pub unstake_available_epoch: EpochHeight,   // 1 Epoch ~ 12 hours
+    pub stake_balance: Balance,                 
+    pub pre_reward: Balance,                    
+    pub last_block_balance_change: BlockHeight, 
+    pub unstake_balance: Balance,               
+    pub unstake_start_time: Timestamp,          
+    pub unstake_available_epoch: EpochHeight,   
+    pub membership: Membership,                 // Upgraded field
 }
 
 #[derive(Deserialize, Serialize)]
@@ -20,7 +30,8 @@ pub struct AccountJson {
     pub can_withdraw: bool,
     pub unstake_start_timestamp: Timestamp,
     pub unstake_available_epoch: EpochHeight,
-    pub current_epoch: EpochHeight
+    pub current_epoch: EpochHeight,
+    pub membership: Membership,                 // Upgraded field
 }
 
 // To cast from Account to Json
@@ -34,7 +45,8 @@ impl AccountJson {
             can_withdraw: account.unstake_available_epoch <= env::epoch_height(),
             unstake_start_timestamp: account.unstake_start_time,
             unstake_available_epoch: account.unstake_available_epoch,
-            current_epoch: env::epoch_height()
+            current_epoch: env::epoch_height(),
+            membership: account.membership,
         }
     }
 }
