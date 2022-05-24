@@ -9,6 +9,7 @@ use crate::types::*;
 use crate::utils::*;
 use crate::enumeration::*;
 use crate::pool::*;
+use crate::staking_contract_v1::*;
 
 mod config;
 mod account;
@@ -17,6 +18,7 @@ mod utils;
 mod internal;
 mod enumeration;
 mod pool;
+mod staking_contract_v1;
 
 // Using `near_bindgen` marco, to notify the smart contract
 // BorshSerde to serde as byte code (for storing on-chain)
@@ -25,17 +27,18 @@ mod pool;
 #[derive(BorshDeserialize, BorshSerialize, PanicOnDefault)]
 #[near_bindgen]
 pub struct StakingContract {
-    pub owner_id: AccountId,                        // ID of contract owner
-    pub ft_contract_id: AccountId,                  // ID of fungible token contract
-    pub config: Config,                             // Config incentive rule
-    pub total_stake: Balance,                       // Total stake balance
-    pub total_paid_reward: Balance,                 // 
-    pub num_staker: u64,                            // The number of stakers
-    pub pre_reward: Balance,                        // 
-    pub last_block_balance_change: BlockHeight,     // Block height when balance updated
-    pub accounts: LookupMap<AccountId, Account>,    // Account informations respected to ID  
-    pub paused: bool,                               // Staking will be paused when there is no more tokens
-    pub paused_block: BlockHeight,                  // Block height when contract paused
+    pub owner_id: AccountId,                        
+    pub ft_contract_id: AccountId,                  
+    pub config: Config,                             
+    pub total_stake: Balance,                       
+    pub total_paid_reward: Balance,                 
+    pub num_staker: u64,                            
+    pub pre_reward: Balance,                        
+    pub last_block_balance_change: BlockHeight,     
+    pub accounts: LookupMap<AccountId, Account>,    
+    pub paused: bool,                               
+    pub paused_block: BlockHeight,                  
+    pub version: i16,                               // New field to update (V2)
 }
 
 #[near_bindgen]
@@ -70,13 +73,14 @@ impl StakingContract {
             last_block_balance_change: env::block_index(), 
             accounts: LookupMap::new(StorageKey::AccountKey),
             paused: false,
-            paused_block: 0
+            paused_block: 0,
+            version: 2i16,
         }
     }
 
     // Storing data on-chain require a small amount of NEAR (since using storage)
     // Instead of using ourself money, we make the user to deposit them
-    // This is the `reserver_near` in wallet
+    // This is the `reserved_near` in wallet
     #[payable]
     pub fn storage_deposit(&mut self, account_id: Option<AccountId>) {
         assert_at_least_one_yocto();
@@ -103,6 +107,33 @@ impl StakingContract {
 
     pub fn is_paused(&self) -> bool {
         self.paused
+    }
+
+    pub fn get_version(&self) -> i16 {
+        self.version
+    }
+
+    // This is to upgrade the staking contract from v1 to v2
+    // Use the private macro to avoid others people calling it (only the contract can call)
+    // To migrate, use the command `near dev-deploy path --initFunction migrate --initArgs '{}'`
+    #[private]
+    #[init(ignore_state)]
+    pub fn migrate() -> Self {
+        let old_contract: StakingContractV1 = env::state_read().expect("Cannot read old contract");
+        StakingContract { 
+            owner_id: old_contract.owner_id,
+            ft_contract_id: old_contract.ft_contract_id,
+            config: old_contract.config,
+            total_stake: old_contract.total_stake,
+            total_paid_reward: old_contract.total_paid_reward,
+            num_staker: old_contract.num_staker,
+            pre_reward: old_contract.pre_reward,
+            last_block_balance_change: old_contract.last_block_balance_change,
+            accounts: old_contract.accounts, 
+            paused: old_contract.paused,
+            paused_block: old_contract.paused_block,
+            version: 2i16 
+        }
     }
 }
 
