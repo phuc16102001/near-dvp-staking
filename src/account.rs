@@ -1,7 +1,7 @@
 use crate::*;
 
 #[derive(BorshDeserialize, BorshSerialize)]
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Clone)]
 #[serde(crate="near_sdk::serde")]
 pub enum Membership {
     Basic,
@@ -9,7 +9,8 @@ pub enum Membership {
     Companion
 }
 
-#[derive(BorshDeserialize, BorshSerialize)]
+#[derive(BorshDeserialize, BorshSerialize, Serialize, Deserialize)]
+#[serde(crate = "near_sdk::serde")]
 pub struct Account {
     pub stake_balance: Balance,                 
     pub pre_reward: Balance,                    

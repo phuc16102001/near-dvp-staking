@@ -30,6 +30,27 @@ impl StakingContract {
         self.last_block_balance_change = env::block_index();
     }
 
+    pub(crate) fn internal_withdraw(&mut self, account_id: AccountId) -> Account {
+        let upgradable_account = self.accounts.get(&account_id).unwrap();
+        let account = Account::from(upgradable_account);
+
+        assert!(account.unstake_balance > 0, "Unstaking balance is zero");
+        assert!(account.unstake_available_epoch <= env::epoch_height(), "You cannot unstake until reach the locked epoch");
+
+        let new_account = Account {
+            pre_reward: account.pre_reward,                    
+            last_block_balance_change: account.last_block_balance_change, 
+            membership: account.membership.clone(),                 
+            stake_balance: account.stake_balance,                 
+            unstake_balance: 0,               
+            unstake_start_time: 0,          
+            unstake_available_epoch: 0,   
+        };
+        self.accounts.insert(&account_id, &UpgradableAccount::from(new_account));
+
+        account
+    }
+
     pub(crate) fn internal_deposit_and_stake(&mut self, sender_id: AccountId, amount: Balance) {
         let upgradable_account = self.accounts.get(&sender_id);
         assert!(upgradable_account.is_some(), "Account not found, please registry first");
