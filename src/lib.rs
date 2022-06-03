@@ -3,6 +3,7 @@ use near_sdk::borsh::{self,BorshDeserialize,BorshSerialize};
 use near_sdk::collections::LookupMap;
 use near_sdk::json_types::{U128};
 use near_sdk::serde::{Deserialize, Serialize};
+// use ::constant::{ONE_YOCTO};
 
 use crate::config::*;
 use crate::account::*;
