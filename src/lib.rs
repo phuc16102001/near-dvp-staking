@@ -174,6 +174,7 @@ mod tests {
         let config: Config = Config {
             reward_num: 500,
             reward_denom: 100000,
+            num_epoch_unlock: 1,
         };
 
         let contract = StakingContract::new(

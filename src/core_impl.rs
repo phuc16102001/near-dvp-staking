@@ -53,6 +53,7 @@ impl StakingContract {
         }
     }
 
+    // Harvest the reward to the wallet
     #[payable]
     pub fn harvest(&mut self) -> Promise {
         assert_one_yocto();
@@ -78,5 +79,13 @@ impl StakingContract {
             0, 
             HARVEST_CALLBACK_GAS
         ))
+    }
+
+    // Unstake the staking token, and locked after an amount of epoch before can withdraw
+    #[payable]
+    pub fn unstake(&mut self, amount: U128) {
+        assert_one_yocto();
+        let account_id = env::predecessor_account_id();
+        self.internal_unstake(account_id, amount.0);
     }
 }

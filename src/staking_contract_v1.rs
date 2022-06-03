@@ -6,9 +6,9 @@ pub struct StakingContractV1 {
     pub ft_contract_id: AccountId,                              // ID of fungible token contract
     pub config: Config,                                         // Config incentive rule
     pub total_stake: Balance,                                   // Total stake balance
-    pub total_paid_reward: Balance,                             // 
+    pub total_paid_reward: Balance,                             // Total reward paid for stakers
     pub num_staker: u128,                                       // The number of stakers
-    pub pre_reward: Balance,                                    // 
+    pub pre_reward: Balance,                                    // Reward before adding the current reward
     pub last_block_balance_change: BlockHeight,                 // Block height when balance updated
     pub accounts: LookupMap<AccountId, UpgradableAccount>,      // Account informations respected to ID  
     pub paused: bool,                                           // Staking will be paused when there is no more tokens

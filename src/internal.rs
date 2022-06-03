@@ -4,6 +4,32 @@ use crate::*;
 
 #[near_bindgen]
 impl StakingContract {
+    pub(crate) fn internal_unstake(&mut self, account_id: AccountId, amount: Balance) {
+        let upgradable_account = self.accounts.get(&account_id).unwrap();
+        let mut account = Account::from(upgradable_account);
+        assert!(amount <= account.stake_balance, "Cannot unstake more than the staking amount");
+
+        // Update account reward
+        let new_reward = self.internal_calculate_new_reward(Some(&account));
+        account.pre_reward += new_reward;
+        account.last_block_balance_change = env::block_index();
+    
+        // Update account unstake
+        account.stake_balance -= amount;
+        account.unstake_balance += amount;
+        account.unstake_start_time = env::block_timestamp();
+        account.unstake_available_epoch = env::epoch_height() + self.config.num_epoch_unlock;
+    
+        if account.stake_balance==0 {
+            self.num_staker -= 1;
+        }    
+
+        let new_contract_reward = self.internal_calculate_new_reward(None);
+        self.pre_reward += new_contract_reward;
+        self.total_stake -= amount;
+        self.last_block_balance_change = env::block_index();
+    }
+
     pub(crate) fn internal_deposit_and_stake(&mut self, sender_id: AccountId, amount: Balance) {
         let upgradable_account = self.accounts.get(&sender_id);
         assert!(upgradable_account.is_some(), "Account not found, please registry first");
