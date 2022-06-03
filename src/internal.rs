@@ -23,6 +23,7 @@ impl StakingContract {
         if account.stake_balance==0 {
             self.num_staker -= 1;
         }    
+        self.accounts.insert(&account_id, &UpgradableAccount::from(account));
 
         let new_contract_reward = self.internal_calculate_new_reward(None);
         self.pre_reward += new_contract_reward;
