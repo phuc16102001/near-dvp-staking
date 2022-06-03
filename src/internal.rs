@@ -4,6 +4,33 @@ use crate::*;
 
 #[near_bindgen]
 impl StakingContract {
+    pub(crate) fn internal_deposit_and_stake(&mut self, sender_id: AccountId, amount: Balance) {
+        let upgradable_account = self.accounts.get(&sender_id);
+        assert!(upgradable_account.is_some(), "Account not found, please registry first");
+        assert_eq!(self.is_paused(), false, "Contract is paused");
+        assert_eq!(self.ft_contract_id, env::predecessor_account_id(), "Only accept the correct fungible token");
+
+        // Update account
+        let mut account = Account::from(upgradable_account.unwrap());
+        let is_new_staker = (account.stake_balance==0);
+        let new_reward = self.internal_calculate_new_reward(Some(&account));
+
+        account.pre_reward += new_reward;                           // Update pre_reward to become the new phase of staking
+        account.stake_balance += amount;                            // Staking the deposit amount
+        account.last_block_balance_change = env::block_index();     // Update current block
+        self.accounts.insert(&sender_id, &UpgradableAccount::from(account));
+
+        // Update pool
+        let new_global_reward = self.internal_calculate_new_reward(None);
+        self.pre_reward += new_global_reward;
+        self.total_stake += amount;
+        self.last_block_balance_change = env::block_index();
+        
+        if is_new_staker {
+            self.num_staker += 1;
+        }
+    }
+
     pub(crate) fn internal_create_account(&mut self, account_id: AccountId) {
         let account = Account {
             stake_balance: 0,
@@ -52,8 +79,7 @@ impl StakingContract {
 
         let cnt_block = last_block - last_change;
         let config = self.config;
-        let rate = (config.reward_num as u64) / config.reward_denom;
-        let reward = stake * (cnt_block as Balance) * (rate as Balance);
+        let reward = ((config.reward_num as Balance) * (stake as Balance) * (cnt_block as Balance)) / (config.reward_denom as Balance);
         reward
     }
 }

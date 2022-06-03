@@ -7,7 +7,7 @@ pub struct StakingContractV1 {
     pub config: Config,                                         // Config incentive rule
     pub total_stake: Balance,                                   // Total stake balance
     pub total_paid_reward: Balance,                             // 
-    pub num_staker: u64,                                        // The number of stakers
+    pub num_staker: u128,                                       // The number of stakers
     pub pre_reward: Balance,                                    // 
     pub last_block_balance_change: BlockHeight,                 // Block height when balance updated
     pub accounts: LookupMap<AccountId, UpgradableAccount>,      // Account informations respected to ID  

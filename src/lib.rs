@@ -1,6 +1,7 @@
 use near_sdk::*;
 use near_sdk::borsh::{self,BorshDeserialize,BorshSerialize};
 use near_sdk::collections::LookupMap;
+use near_sdk::json_types::{U128};
 use near_sdk::serde::{Deserialize, Serialize};
 
 use crate::config::*;
@@ -12,6 +13,7 @@ use crate::pool::*;
 use crate::staking_contract_v1::*;
 use crate::account_v1::*;
 use crate::upgradable_account::*;
+use crate::core_impl::*;
 
 mod config;
 mod account;
@@ -23,6 +25,7 @@ mod pool;
 mod staking_contract_v1;
 mod account_v1;
 mod upgradable_account;
+mod core_impl;
 
 // Using `near_bindgen` marco, to notify the smart contract
 // BorshSerde to serde as byte code (for storing on-chain)
@@ -36,13 +39,13 @@ pub struct StakingContract {
     pub config: Config,                             
     pub total_stake: Balance,                       
     pub total_paid_reward: Balance,                 
-    pub num_staker: u64,                            
+    pub num_staker: u128,                            
     pub pre_reward: Balance,                        
     pub last_block_balance_change: BlockHeight,     
     pub accounts: LookupMap<AccountId, UpgradableAccount>,    
     pub paused: bool,                               
     pub paused_block: BlockHeight,                  
-    pub version: i16,                               // New field to update (V2)
+    pub version: u128,                               // New field to update (V2)
 }
 
 #[near_bindgen]
@@ -78,7 +81,7 @@ impl StakingContract {
             accounts: LookupMap::new(StorageKey::AccountKey),
             paused: false,
             paused_block: 0,
-            version: 2i16,
+            version: 2,
         }
     }
 
@@ -113,8 +116,8 @@ impl StakingContract {
         self.paused
     }
 
-    pub fn get_version(&self) -> i16 {
-        self.version
+    pub fn get_version(&self) -> U128 {
+        U128(self.version)
     }
 
     // This is to upgrade the staking contract from v1 to v2
@@ -138,7 +141,7 @@ impl StakingContract {
             accounts: old_contract.accounts, 
             paused: old_contract.paused,
             paused_block: old_contract.paused_block,
-            version: 2i16 
+            version: 2
         }
     }
 }
